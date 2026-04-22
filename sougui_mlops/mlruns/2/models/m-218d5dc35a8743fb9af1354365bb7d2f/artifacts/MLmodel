@@ -1,0 +1,23 @@
+artifact_path: file:C:/Users/HP/sougui_mlops/mlruns/2/models/m-218d5dc35a8743fb9af1354365bb7d2f/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.13.3
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.7.2
+    skops_trusted_types: null
+mlflow_version: 3.11.1
+model_id: m-218d5dc35a8743fb9af1354365bb7d2f
+model_size_bytes: 2067755
+model_uuid: m-218d5dc35a8743fb9af1354365bb7d2f
+prompts: null
+run_id: 71b18c8b3d9147ab8b6ffc10bd194f89
+utc_time_created: '2026-04-22 16:35:08.181758'

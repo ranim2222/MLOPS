@@ -1,0 +1,15 @@
+artifact_path: file:C:/Users/HP/sougui_mlops/mlruns/2/models/m-501b3f14b8bf4185b4eace64372ef290/artifacts
+flavors:
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.7.2
+    skops_trusted_types: null
+mlflow_version: 3.11.1
+model_id: m-501b3f14b8bf4185b4eace64372ef290
+model_size_bytes: 466
+model_uuid: m-501b3f14b8bf4185b4eace64372ef290
+prompts: null
+run_id: d34164f9b59a41dd8655b7b8fe7c808c
+utc_time_created: '2026-04-22 16:39:14.047733'
