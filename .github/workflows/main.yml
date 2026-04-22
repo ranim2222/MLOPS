@@ -1,29 +1,121 @@
-name: Test API Sougui ML
+name: CI/CD - Sougui ML
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     
-    - name: Installer dépendances
+    - name: Installer les dépendances
       run: |
+        pip install --upgrade pip
         pip install fastapi uvicorn joblib pandas numpy scikit-learn
+    
+    - name: Vérifier la structure des dossiers
+      run: |
+        echo "=== Structure complète ==="
+        ls -la
+        echo "=== Recherche du dossier models ==="
+        find . -name "models" -type d 2>/dev/null || echo "Dossier models non trouvé"
+        echo "=== Recherche des fichiers .pkl ==="
+        find . -name "*.pkl" 2>/dev/null || echo "Aucun fichier .pkl trouvé"
+        echo "=== Recherche de app.py ==="
+        find . -name "app.py" 2>/dev/null || echo "app.py non trouvé"
     
     - name: Tester chargement modèle
       run: |
-        python -c "import joblib; model = joblib.load('models/rf_classification_v1.pkl'); print('✅ Modèle chargé')"
+        python << EOF
+import joblib
+import os
+import sys
+
+# Chemins possibles
+possible_paths = [
+    'models/rf_classification_v1.pkl',
+    'sougui_mlops/models/rf_classification_v1.pkl',
+    './models/rf_classification_v1.pkl',
+    './sougui_mlops/models/rf_classification_v1.pkl'
+]
+
+model_loaded = False
+for path in possible_paths:
+    if os.path.exists(path):
+        try:
+            model = joblib.load(path)
+            print(f"✅ Modèle chargé avec succès: {path}")
+            model_loaded = True
+            break
+        except Exception as e:
+            print(f"❌ Erreur chargement {path}: {e}")
+
+if not model_loaded:
+    print("❌ Aucun modèle trouvé")
+    sys.exit(1)
+EOF
     
-    - name: Tester API
+    - name: Tester l'API
       run: |
-        python -c "import sys; sys.path.insert(0, '.'); from src.app import app; print('✅ API chargée')"
+        python << EOF
+import sys
+import os
+
+# Ajouter les chemins possibles au PYTHONPATH
+possible_paths = [
+    '.',
+    'sougui_mlops',
+    './sougui_mlops'
+]
+
+api_loaded = False
+for path in possible_paths:
+    if os.path.exists(os.path.join(path, 'src', 'app.py')):
+        sys.path.insert(0, path)
+        try:
+            from src.app import app
+            print(f"✅ API chargée avec succès depuis: {path}")
+            api_loaded = True
+            break
+        except Exception as e:
+            print(f"❌ Erreur import depuis {path}: {e}")
+
+if not api_loaded:
+    print("❌ API non trouvée")
+    sys.exit(1)
+EOF
+
+  docker-build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Build Docker image
+      run: |
+        # Chercher le Dockerfile
+        if [ -f "Dockerfile" ]; then
+          docker build -t sougui_mlops:latest .
+        elif [ -f "sougui_mlops/Dockerfile" ]; then
+          cd sougui_mlops
+          docker build -t sougui_mlops:latest .
+        else
+          echo "❌ Dockerfile non trouvé"
+          exit 1
+        fi
+      continue-on-error: false
