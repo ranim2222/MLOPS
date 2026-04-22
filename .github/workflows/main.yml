@@ -38,7 +38,7 @@ jobs:
     
     - name: Tester chargement modèle
       run: |
-        python << EOF
+        python -c "
 import joblib
 import os
 import sys
@@ -56,20 +56,20 @@ for path in possible_paths:
     if os.path.exists(path):
         try:
             model = joblib.load(path)
-            print(f"✅ Modèle chargé avec succès: {path}")
+            print(f'✅ Modèle chargé avec succès: {path}')
             model_loaded = True
             break
         except Exception as e:
-            print(f"❌ Erreur chargement {path}: {e}")
+            print(f'❌ Erreur chargement {path}: {e}')
 
 if not model_loaded:
-    print("❌ Aucun modèle trouvé")
+    print('❌ Aucun modèle trouvé')
     sys.exit(1)
-EOF
+"
     
     - name: Tester l'API
       run: |
-        python << EOF
+        python -c "
 import sys
 import os
 
@@ -86,16 +86,16 @@ for path in possible_paths:
         sys.path.insert(0, path)
         try:
             from src.app import app
-            print(f"✅ API chargée avec succès depuis: {path}")
+            print(f'✅ API chargée avec succès depuis: {path}')
             api_loaded = True
             break
         except Exception as e:
-            print(f"❌ Erreur import depuis {path}: {e}")
+            print(f'❌ Erreur import depuis {path}: {e}')
 
 if not api_loaded:
-    print("❌ API non trouvée")
+    print('❌ API non trouvée')
     sys.exit(1)
-EOF
+"
 
   docker-build:
     needs: test
@@ -108,7 +108,6 @@ EOF
     
     - name: Build Docker image
       run: |
-        # Chercher le Dockerfile
         if [ -f "Dockerfile" ]; then
           docker build -t sougui_mlops:latest .
         elif [ -f "sougui_mlops/Dockerfile" ]; then
@@ -118,4 +117,3 @@ EOF
           echo "❌ Dockerfile non trouvé"
           exit 1
         fi
-      continue-on-error: false
