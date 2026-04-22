@@ -1,0 +1,95 @@
+﻿name: CI/CD - Sougui ML
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Installer les dépendances
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest httpx
+    
+    - name: Vérifier les fichiers
+      run: |
+        ls -la
+        ls -la models/
+    
+    - name: Tester le chargement des modèles
+      run: |
+        python -c "
+import joblib
+import os
+models = ['rf_classification_v1.pkl', 'xgb_classification_v1.pkl', 'rf_regression_v1.pkl']
+for m in models:
+    path = f'models/{m}'
+    if os.path.exists(path):
+        model = joblib.load(path)
+        print(f'✅ {m} chargé avec succès')
+    else:
+        print(f'⚠️ {m} non trouvé')
+        "
+    
+    - name: Tester l'API
+      run: |
+        python -c "
+from fastapi.testclient import TestClient
+from src.app import app
+client = TestClient(app)
+response = client.get('/')
+assert response.status_code == 200
+print('✅ API testée')
+        "
+    
+    - name: Tester une prédiction
+      run: |
+        python -c "
+from fastapi.testclient import TestClient
+from src.app import app
+client = TestClient(app)
+response = client.post('/predict', json={
+    'model_name': 'rf_classification',
+    'features': [1.5, 2.3, 0.8, 1.0, 0.5]
+})
+assert response.status_code == 200
+print('✅ Prédiction testée')
+        "
+    
+    - name: Tous les tests sont passés
+      run: echo "✅ CI/CD terminé avec succès!"
+
+  docker-build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Construire l'image Docker
+      run: docker build -t sougui_mlops:latest .
+    
+    - name: Tester l'image Docker
+      run: |
+        docker run -d -p 8000:8000 --name test_api sougui_mlops:latest
+        sleep 10
+        curl -f http://localhost:8000/health
+        docker stop test_api
+        docker rm test_api
+    
+    - name: Docker build réussi
+      run: echo "✅ Image Docker construite avec succès!"
