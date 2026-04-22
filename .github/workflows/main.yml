@@ -3,8 +3,6 @@ name: Test API Sougui ML
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 jobs:
   test:
@@ -20,7 +18,7 @@ jobs:
     
     - name: Installer dépendances
       run: |
-        pip install -r requirements.txt
+        pip install fastapi uvicorn joblib pandas numpy scikit-learn
     
     - name: Tester chargement modèle
       run: |
@@ -28,5 +26,4 @@ jobs:
     
     - name: Tester API
       run: |
-        pip install fastapi uvicorn httpx
-        python -c "from src.app import app; print('✅ API chargée')"
+        python -c "import sys; sys.path.insert(0, '.'); from src.app import app; print('✅ API chargée')"
