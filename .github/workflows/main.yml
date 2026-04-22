@@ -1,0 +1,32 @@
+name: Test API Sougui ML
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Installer dépendances
+      run: |
+        pip install -r requirements.txt
+    
+    - name: Tester chargement modèle
+      run: |
+        python -c "import joblib; model = joblib.load('models/rf_classification_v1.pkl'); print('✅ Modèle chargé')"
+    
+    - name: Tester API
+      run: |
+        pip install fastapi uvicorn httpx
+        python -c "from src.app import app; print('✅ API chargée')"
